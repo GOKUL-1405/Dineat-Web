@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Test</title>
+    <style>
+        .payment-section { display: none; padding: 20px; border: 1px solid #ccc; margin: 10px 0; }
+        .payment-section.active { display: block; }
+        .payment-option { margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Payment Test Page</h1>
+    
+    <div class="payment-option">
+        <label>
+            <input type="radio" name="payment" value="card" checked onchange="showPayment('card')">
+            Credit Card
+        </label>
+    </div>
+    
+    <div class="payment-option">
+        <label>
+            <input type="radio" name="payment" value="wallet" onchange="showPayment('wallet')">
+            Wallet
+        </label>
+    </div>
+    
+    <div class="payment-option">
+        <label>
+            <input type="radio" name="payment" value="upi" onchange="showPayment('upi')">
+            UPI
+        </label>
+    </div>
+    
+    <div id="card-section" class="payment-section active">
+        <h3>Card Details</h3>
+        <input type="text" placeholder="Card Number" style="width: 100%; padding: 10px;">
+        <br><br>
+        <input type="text" placeholder="MM/YY" style="width: 100px; padding: 10px;">
+        <input type="text" placeholder="CVV" style="width: 100px; padding: 10px;">
+    </div>
+    
+    <div id="wallet-section" class="payment-section">
+        <h3>Wallet Payment</h3>
+        <p>Select your wallet:</p>
+        <button>PhonePe</button>
+        <button>Amazon Pay</button>
+    </div>
+    
+    <div id="upi-section" class="payment-section">
+        <h3>UPI Payment</h3>
+        <p>Scan QR Code:</p>
+        <img src="https://quickchart.io/qr?size=200&text=upi://pay?pa=gokulkumar1406%40okaxis&pn=Gokul%20Kumar&am=1&cu=INR" alt="UPI QR">
+    </div>
+    
+    <script>
+        function showPayment(type) {
+            console.log('Payment type:', type);
+            
+            // Hide all sections
+            document.getElementById('card-section').style.display = 'none';
+            document.getElementById('wallet-section').style.display = 'none';
+            document.getElementById('upi-section').style.display = 'none';
+            
+            // Show selected section
+            if (type === 'card') {
+                document.getElementById('card-section').style.display = 'block';
+            } else if (type === 'wallet') {
+                document.getElementById('wallet-section').style.display = 'block';
+                alert('Wallet payment selected!');
+            } else if (type === 'upi') {
+                document.getElementById('upi-section').style.display = 'block';
+            }
+        }
+        
+        // Initialize
+        console.log('Payment test page loaded');
+        showPayment('card');
+    </script>
+</body>
+</html>

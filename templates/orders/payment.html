@@ -1,0 +1,557 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment - DineAt{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #233D4C !important;
+        color: white;
+    }
+
+    .payment-page {
+        padding: 100px 0 50px;
+        min-height: 100vh;
+    }
+
+    .payment-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 25px;
+        padding: 2.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .payment-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .panel {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
+        padding: 1.5rem;
+    }
+
+    .panel h3 {
+        margin: 0 0 1rem;
+        font-weight: 900;
+        letter-spacing: 0.3px;
+    }
+
+    .order-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .order-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.75rem;
+        padding: 0.85rem 1rem;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .order-item .name {
+        font-weight: 900;
+        color: white;
+        margin: 0;
+        font-size: 0.98rem;
+    }
+
+    .order-item .meta {
+        margin: 0.2rem 0 0;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.85rem;
+    }
+
+    .order-item .price {
+        text-align: right;
+        font-weight: 900;
+        color: white;
+        white-space: nowrap;
+    }
+
+    .order-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        font-weight: 900;
+    }
+
+    .qr-box {
+        display: none;
+        margin-top: 1rem;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.25);
+        padding: 1.25rem;
+    }
+
+    .qr-box.active {
+        display: block;
+    }
+
+    .qr-row {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .qr-canvas-wrap {
+        width: 160px;
+        height: 160px;
+        background: white;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        padding: 10px;
+    }
+
+    .qr-canvas-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+
+    .qr-hint h4 {
+        margin: 0;
+        font-weight: 900;
+        color: white;
+    }
+
+    .qr-hint p {
+        margin: 0.4rem 0 0;
+        color: rgba(255, 255, 255, 0.75);
+        font-weight: 600;
+        line-height: 1.5;
+        font-size: 0.9rem;
+    }
+
+    .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 999px;
+        font-weight: 900;
+        font-size: 0.78rem;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .pill.success {
+        background: rgba(16, 185, 129, 0.18);
+        border-color: rgba(16, 185, 129, 0.35);
+        color: #10b981;
+    }
+
+    .pill.warn {
+        background: rgba(251, 191, 36, 0.14);
+        border-color: rgba(251, 191, 36, 0.30);
+        color: #fbbf24;
+    }
+
+    .payment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+
+    .payment-header h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 800;
+        color: white;
+    }
+
+    .total-pill {
+        background: rgba(16, 185, 129, 0.2);
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        color: #10b981;
+        padding: 0.6rem 1rem;
+        border-radius: 999px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+    }
+
+    .payment-methods {
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .payment-method {
+        margin-bottom: 1rem;
+    }
+
+    .payment-method input[type="radio"] {
+        display: none;
+    }
+
+    .payment-method label {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 1.1rem;
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+
+    .payment-method label:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .payment-method input[type="radio"]:checked + label {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: #10b981;
+    }
+
+    .payment-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .payment-info h4 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 800;
+        color: white;
+    }
+
+    .payment-info p {
+        margin: 0.2rem 0 0;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.75);
+    }
+
+    .card-details {
+        display: none;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .card-details.active {
+        display: block;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 0.85rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
+        outline: none;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1rem;
+    }
+
+    .pay-btn {
+        width: 100%;
+        padding: 1.1rem;
+        border: none;
+        border-radius: 14px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        background: #10b981;
+        color: #0b1b14;
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+
+    .pay-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(16, 185, 129, 0.35);
+    }
+
+    @media (max-width: 768px) {
+        .payment-card {
+            padding: 1.5rem;
+        }
+        .payment-grid {
+            grid-template-columns: 1fr;
+        }
+        .qr-row {
+            grid-template-columns: 1fr;
+        }
+        .qr-canvas-wrap {
+            margin: 0 auto;
+        }
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="payment-page">
+    <div class="container">
+        <div class="payment-card">
+            <div class="payment-header">
+                <h1>💳 Payment</h1>
+                <div class="total-pill">Total: ₹{{ total_amount }}</div>
+            </div>
+
+            <div class="payment-grid">
+                <div class="panel" id="order-panel">
+                    <h3>🧾 Order Details</h3>
+                    <ul class="order-list" id="order-list"></ul>
+                    <div class="order-total">
+                        <span>Total</span>
+                        <span>₹{{ total_amount }}</span>
+                    </div>
+                </div>
+
+                <div class="panel" id="payment-panel">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap: 0.75rem; flex-wrap:wrap;">
+                        <h3 style="margin:0;">Choose Payment</h3>
+                        <span class="pill warn" id="upi-pill">Waiting</span>
+                    </div>
+
+                    <form method="post" action="{% url 'orders:process_payment' %}" id="payment-page-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="cart_data" id="cart-data" value="{{ cart_data|default:''|escape }}">
+                        <input type="hidden" name="total_amount" id="total-amount-hidden" value="{{ total_amount|default:'' }}">
+                        <input type="hidden" name="payment_method" id="payment-method-hidden" value="card">
+
+                        <div class="payment-methods">
+                            <div class="payment-method">
+                                <input type="radio" id="pay-card" name="payment" value="card" checked onchange="showPayment('card')">
+                                <label for="pay-card">
+                                    <div class="payment-icon"><i class="fas fa-credit-card"></i></div>
+                                    <div class="payment-info">
+                                        <h4>Credit Card</h4>
+                                        <p>Visa, Mastercard, RuPay</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="payment-method">
+                                <input type="radio" id="pay-wallet" name="payment" value="wallet" onchange="showPayment('wallet')">
+                                <label for="pay-wallet">
+                                    <div class="payment-icon"><i class="fas fa-wallet"></i></div>
+                                    <div class="payment-info">
+                                        <h4>Wallet</h4>
+                                        <p>Amazon Pay, PhonePe Wallet</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="payment-method">
+                                <input type="radio" id="pay-upi" name="payment" value="upi" onchange="showPayment('upi')">
+                                <label for="pay-upi">
+                                    <div class="payment-icon"><i class="fas fa-qrcode"></i></div>
+                                    <div class="payment-info">
+                                        <h4>GPay / Paytm (QR)</h4>
+                                        <p>Scan QR using mobile</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="card-details" id="card-details">
+                            <h4 style="margin-top:0; font-weight:900;">Card Details</h4>
+                            <div class="form-group">
+                                <label for="card-number">Card Number</label>
+                                <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="expiry">Expiry</label>
+                                    <input type="text" id="expiry" placeholder="MM/YY" maxlength="5">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cvv">CVV</label>
+                                    <input type="text" id="cvv" placeholder="123" maxlength="3">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="qr-box" id="qr-box">
+                            <div class="qr-row">
+                                <div class="qr-canvas-wrap">
+                                    <img id="qr-img" alt="UPI QR" />
+                                </div>
+                                <div class="qr-hint">
+                                    <h4>Scan QR (GPay / Paytm)</h4>
+                                    <p>Mobile la scan pannunga. Payment success aana udane indha page automatic-a update aagum.</p>
+                                    <p style="margin-top:0.75rem;"><strong>Note:</strong> QR scan pannumbodhu phone la oru success page open aagum. Adha close pannalaam.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="pay-btn" id="pay-btn">Pay Now</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Parse cart data
+    const rawCartData = document.getElementById('cart-data')?.value || '[]';
+    let cart;
+    try {
+        cart = JSON.parse(rawCartData);
+    } catch (e) {
+        cart = [];
+    }
+
+    // Display order items
+    const orderList = document.getElementById('order-list');
+    if (orderList && Array.isArray(cart)) {
+        orderList.innerHTML = '';
+        cart.forEach((item) => {
+            const qty = parseInt(item.quantity || 1, 10);
+            const price = parseFloat(item.price || 0);
+            const line = document.createElement('li');
+            line.className = 'order-item';
+            line.innerHTML = `
+                <div>
+                    <p class="name">${item.name || ''}</p>
+                    <p class="meta">Qty: ${isNaN(qty) ? 1 : qty} · ₹${isNaN(price) ? 0 : price}</p>
+                </div>
+                <div class="price">₹${(isNaN(qty) || isNaN(price)) ? 0 : (qty * price).toFixed(2)}</div>
+            `;
+            orderList.appendChild(line);
+        });
+    }
+
+    // Simple payment function
+    function showPayment(type) {
+        console.log('Payment type:', type);
+        
+        // Hide all sections
+        const cardSection = document.getElementById('card-details');
+        const qrSection = document.getElementById('qr-box');
+        
+        if (cardSection) cardSection.style.display = 'none';
+        if (qrSection) qrSection.style.display = 'none';
+        
+        // Show selected section
+        if (type === 'card') {
+            if (cardSection) cardSection.style.display = 'block';
+        } else if (type === 'wallet') {
+            alert('Wallet payment selected!');
+        } else if (type === 'upi') {
+            if (qrSection) {
+                qrSection.style.display = 'block';
+                // Set QR image
+                const img = document.getElementById('qr-img');
+                if (img) {
+                    img.src = 'https://quickchart.io/qr?size=200&text=' + encodeURIComponent('{{ upi_mark_paid_url|escapejs }}');
+                }
+            }
+        }
+        
+        // Update hidden input
+        const hiddenInput = document.getElementById('payment-method-hidden');
+        if (hiddenInput) {
+            hiddenInput.value = type;
+        }
+    }
+
+    // Card input formatting
+    function formatCardInputs() {
+        const cardNumber = document.getElementById('card-number');
+        if (cardNumber) {
+            cardNumber.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\s/g, '');
+                let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+                e.target.value = formattedValue;
+            });
+        }
+
+        const expiry = document.getElementById('expiry');
+        if (expiry) {
+            expiry.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length >= 2) {
+                    value = value.slice(0, 2) + '/' + value.slice(2, 4);
+                }
+                e.target.value = value;
+            });
+        }
+
+        const cvv = document.getElementById('cvv');
+        if (cvv) {
+            cvv.addEventListener('input', function (e) {
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+        }
+    }
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Payment page loaded');
+        
+        // Format card inputs
+        formatCardInputs();
+        
+        // Show card section by default
+        showPayment('card');
+    });
+</script>
+{% endblock %}
